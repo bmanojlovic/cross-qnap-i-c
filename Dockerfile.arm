@@ -1,0 +1,25 @@
+FROM opensuse:leap
+MAINTAINER Boris Manojlovic <boris@steki.net>
+
+RUN	zypper install -y wget tar glibc-32bit && zypper clean -a
+
+RUN	wget -O cross-project-arm-20110901.tar.gz \
+	https://download.sourceforge.net/project/qosgpl/QNAP%20NAS%20Tool%20Chains/cross-project-arm-20110901.tar.gz \
+	&& tar -C / -zxvf cross-project-arm-20110901.tar.gz && rm cross-project-arm-20110901.tar.gz
+
+ENV	HOST=arm-none-linux-gnueabi \
+	CROSS_COMPILER_BINDIR=/opt/cross-project/arm/marvell/bin/
+
+ENV	ARCH=armel
+
+RUN	cd $CROSS_COMPILER_BINDIR ;for i in *;do \
+		ln -sv $i $(echo $i|sed -e "s/$HOST-//g") || true; \
+	done
+
+ENV PATH=$PATH:$CROSS_COMPILER_BINDIR
+
+USER 1000
+
+ADD call.sh /usr/bin/call.sh
+
+ENTRYPOINT ["/usr/bin/call.sh"]

@@ -1,0 +1,25 @@
+FROM opensuse:leap
+MAINTAINER Boris Manojlovic <boris@steki.net>
+
+RUN	zypper install -y wget tar glibc-32bit && zypper clean -a
+
+RUN	wget -O cross-project-x86.u7-20111011.tar.gz \
+	https://download.sourceforge.net/project/qosgpl/QNAP%20NAS%20Tool%20Chains/cross-project-x86.u7-20111011.tar.gz \
+	&& tar -C / -zxvf cross-project-x86.u7-20111011.tar.gz && rm cross-project-x86.u7-20111011.tar.gz
+	
+ENV	HOST=i486-linux-gnu \
+	CROSS_COMPILER_BINDIR=/opt/cross-project/x86/sys-root/usr/bin
+
+ENV	ARCH=i486
+
+RUN	cd $CROSS_COMPILER_BINDIR ;for i in *;do \
+		ln -sv $i $(echo $i|sed -e "s/$HOST-//g") || true; \
+	done
+
+ENV PATH=$PATH:$CROSS_COMPILER_BINDIR
+
+USER 1000
+
+ADD call.sh /usr/bin/call.sh
+
+ENTRYPOINT ["/usr/bin/call.sh"]
